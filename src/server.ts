@@ -1,41 +1,53 @@
-import express from "express";
-import mongoose from "mongoose";
+// Main Server Entry Point
+import dotenv from 'dotenv';
+import { Database } from './infrastructure/database/mongodb/Database';
+import { App } from './infrastructure/http/app';
 
+// Load environment variables
+dotenv.config();
 
-import { RegisterUser } from "./application/usecases/RegisterUser";
-import { LoginUser } from "./application/usecases/LoginUser";
-import { GetDashboard } from "./application/usecases/GetDashboard";
-import { GenerateDocument } from "./application/usecases/GenerateDocument";
+const PORT = process.env.PORT || 3000;
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/wallet-app';
+const FIXED_TOKEN = process.env.FIXED_TOKEN || 'mi-token-super-secreto-12345';
+const JWT_SECRET = process.env.JWT_SECRET || 'jwt-secret-key-for-internal-use';
 
-import { AuthController } from "./interfaces/controllers/AuthController";
-import { DashboardController } from "./interfaces/controllers/DashboardController";
-import { DocumentController } from "./interfaces/controllers/DocumentController";
+async function startServer() {
+  try {
+    // Connect to MongoDB
+    const database = Database.getInstance();
+    await database.connect(MONGODB_URI);
 
-import { authRoutes } from "./interfaces/routes/authRoutes";
-import { dashboardRoutes } from "./interfaces/routes/dashboardRoutes";
-import { documentRoutes } from "./interfaces/routes/documentRoutes";
-import { UserRepositoryMongo } from "./infraestructure/repositories/UserRepositoryMongo";
+    // Initialize Express app
+    const application = new App(FIXED_TOKEN, JWT_SECRET);
+    const app = application.getApp();
 
-const app = express();
-app.use(express.json());
+    // Start server
+    app.listen(PORT, () => {
+      console.log(`🚀 Server running on port ${PORT}`);
+      console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
+      console.log(`🔒 Fixed Token: ${FIXED_TOKEN}`);
+      console.log(`\n📋 Available endpoints:`);
+      console.log(`   GET  /health`);
+      console.log(`   POST /api/auth/register`);
+      console.log(`   POST /api/auth/login`);
+      console.log(`   GET  /api/dashboard`);
+      console.log(`   GET  /api/documents`);
+      console.log(`   POST /api/documents/generate`);
+      console.log(`   GET  /api/transactions`);
+      console.log(`\n💡 All /api/* routes require 'Authorization' header with fixed token`);
+      console.log(`💡 Protected routes also require 'x-user-token' header with JWT token\n`);
+    });
 
-// DB
-mongoose.connect("mongodb://localhost:27017/wallet");
+    // Graceful shutdown
+    process.on('SIGINT', async () => {
+      console.log('\n🛑 Shutting down gracefully...');
+      await database.disconnect();
+      process.exit(0);
+    });
+  } catch (error) {
+    console.error('❌ Failed to start server:', error);
+    process.exit(1);
+  }
+}
 
-// DI
-const userRepo = new UserRepositoryMongo();
-
-const authController = new AuthController(
-  new RegisterUser(userRepo),
-  new LoginUser(userRepo)
-);
-
-const dashboardController = new DashboardController(new GetDashboard());
-const documentController = new DocumentController(new GenerateDocument());
-
-// Routes
-app.use("/auth", authRoutes(authController));
-app.use("/dashboard", dashboardRoutes(dashboardController));
-app.use("/documents", documentRoutes(documentController));
-
-app.listen(3000, () => console.log("Server on http://localhost:3000"));
+startServer();
