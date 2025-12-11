@@ -288,6 +288,143 @@ x-user-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
 ---
 
+### 8. Get Balance
+
+#### `GET /api/transactions/balance`
+
+Get the balance for the authenticated user from the balance collection.
+
+**Headers:**
+```
+Authorization: Bearer mi-token-super-secreto-12345
+x-user-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+**Success Response (200):**
+```json
+{
+  "success": true,
+  "balance": {
+    "id": "6756e7f8a9b1c2d3e4f5g6h7",
+    "userId": "6756e7f8a9b1c2d3e4f5g6h7",
+    "amount": 5000,
+    "currency": "USD",
+    "createdAt": "2025-11-01T00:00:00.000Z",
+    "updatedAt": "2025-12-10T00:00:00.000Z"
+  }
+}
+```
+
+**Note:** If the user doesn't have a balance record, it will be created automatically with amount 0.
+
+---
+
+### 9. Add Balance (Recharge)
+
+#### `POST /api/transactions/add-balance`
+
+Add balance to the authenticated user's account and create a recharge transaction.
+
+**Headers:**
+```
+Authorization: Bearer mi-token-super-secreto-12345
+x-user-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+Content-Type: application/json
+```
+
+**Body:**
+```json
+{
+  "amount": 1000,
+  "description": "Monthly recharge"
+}
+```
+
+**Success Response (201):**
+```json
+{
+  "success": true,
+  "message": "Balance added successfully",
+  "transaction": {
+    "id": "6756e7f8a9b1c2d3e4f5g6h9",
+    "userId": "6756e7f8a9b1c2d3e4f5g6h7",
+    "type": "recharge",
+    "amount": 1000,
+    "description": "Monthly recharge",
+    "createdAt": "2025-12-10T00:00:00.000Z"
+  },
+  "newBalance": 6000
+}
+```
+
+**Error Response (400):**
+```json
+{
+  "error": "Amount must be greater than 0"
+}
+```
+
+---
+
+### 10. Deduct Balance (Expense)
+
+#### `POST /api/transactions/deduct-balance`
+
+Deduct balance from the authenticated user's account and create an expense transaction.
+
+**Headers:**
+```
+Authorization: Bearer mi-token-super-secreto-12345
+x-user-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+Content-Type: application/json
+```
+
+**Body:**
+```json
+{
+  "amount": 150,
+  "description": "Service payment"
+}
+```
+
+**Success Response (201):**
+```json
+{
+  "success": true,
+  "message": "Balance deducted successfully",
+  "transaction": {
+    "id": "6756e7f8a9b1c2d3e4f5g6h9",
+    "userId": "6756e7f8a9b1c2d3e4f5g6h7",
+    "type": "expense",
+    "amount": 150,
+    "description": "Service payment",
+    "createdAt": "2025-12-10T00:00:00.000Z"
+  },
+  "newBalance": 5850
+}
+```
+
+**Error Responses:**
+```json
+{
+  "error": "Amount must be greater than 0"
+}
+```
+
+```json
+{
+  "error": "Insufficient balance"
+}
+```
+
+```json
+{
+  "error": "Balance not found"
+}
+```
+
+---
+
 ## Data Models
 
 ### User

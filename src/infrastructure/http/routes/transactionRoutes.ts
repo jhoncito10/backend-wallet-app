@@ -13,6 +13,9 @@ export const createTransactionRoutes = (
   router.use(jwtAuthMiddleware(jwtSecret));
 
   router.get('/', transactionController.getTransactions);
+  router.get('/balance', transactionController.getBalance);
+  router.post('/add-balance', transactionController.addBalance);
+  router.post('/deduct-balance', transactionController.deductBalance);
 
   return router;
 };
